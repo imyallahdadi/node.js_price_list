@@ -1,0 +1,23 @@
+<%- include('header') %>
+
+<main class="products-page">
+  <div class="brand-header">
+    <img src="../statics/images/b_img/<%= brand.logo %>.jpg" alt="<%= brand.brand_name %>">
+    <h1>محصولات برند <%= brand.brand_name %></h1>
+  </div>
+
+  <div class="product-grid">
+    <% if (products.length > 0) { %>
+      <% products.forEach(product => { %>
+        <div class="product-card">
+          <img src="../statics/images/p_img/<%= product.p_logo %>.jpg" alt="<%= product.p_name %>">
+          <h2><%= product.p_name %></h2>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p class="no-products">هنوز محصولی برای این برند ثبت نشده است.</p>
+    <% } %>
+  </div>
+</main>
+
+<%- include('footer') %>

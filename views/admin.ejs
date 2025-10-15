@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل مدیریت سوبار</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <header class="admin-header">
+    <h1>🛠️ پنل مدیریت سوبار</h1>
+    <div class="admin-user">
+      <span>مدیر</span>
+      <a href="/logout" class="logout-btn">خروج</a>
+    </div>
+  </header>
+
+  <main class="admin-wrapper">
+    <aside class="sidebar">
+      <ul>
+        <li class="active">📦 افزودن برند</li>
+        <li>🛒 افزودن محصول</li>
+      </ul>
+    </aside>
+
+    <section class="content">
+      <!-- فرم افزودن برند -->
+      <div class="form-card" id="add-brand">
+        <h2>➕ افزودن برند جدید</h2>
+        <form action="/admin/add-brand" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>نام برند:</label>
+            <input type="text" name="brand_name" placeholder="مثلاً: پارس اشن" required>
+          </div>
+
+          <div class="form-group">
+            <label>لوگو برند:</label>
+            <input type="file" name="logo" accept="image/*">
+          </div>
+
+          <button type="submit" class="btn-primary">ثبت برند</button>
+        </form>
+      </div>
+
+      <!-- فرم افزودن محصول -->
+      <div class="form-card" id="add-product">
+        <h2>➕ افزودن محصول جدید</h2>
+        <form action="/admin/add-product" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>نام محصول:</label>
+            <input type="text" name="p_name" placeholder="مثلاً: سیلر" required>
+          </div>
+
+          <div class="form-group">
+            <label>انتخاب برند:</label>
+            <select name="b_id" required>
+              <option value="">-- انتخاب برند --</option>
+              <% brands.forEach(function(b) { %>
+                <option value="<%= b.brand_id %>"><%= b.brand_name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>عکس محصول:</label>
+            <input type="file" name="p_logo" accept="image/*">
+          </div>
+
+          <button type="submit" class="btn-primary">ثبت محصول</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

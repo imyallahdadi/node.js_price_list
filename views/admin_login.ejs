@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ورود مدیر سیستم</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin-login.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <h1>ورود به پنل مدیریت</h1>
+
+
+      <% if (typeof q != 'undefined') { %>
+        <div class="error-msg"><%= q %></div>
+      <% } %>
+
+      <form action="/admin" method="POST">
+        <label for="username">نام کاربری</label>
+        <input type="text" id="username" name="username" placeholder="username" required>
+
+        <label for="password">رمز عبور</label>
+        <input type="password" id="password" name="password" placeholder="password" required>
+
+        <button type="submit">ورود</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
