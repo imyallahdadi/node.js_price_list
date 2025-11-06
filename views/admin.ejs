@@ -6,6 +6,78 @@
   <title>پنل مدیریت سوبار</title>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    body {
+      font-family: "Vazirmatn", sans-serif;
+      margin: 0;
+      background: #f9f9f9;
+    }
+    .admin-header {
+      background: #2b3a55;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 220px;
+      background: #eee;
+      padding: 1rem;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar li {
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: 0.3s;
+    }
+    .sidebar li.active,
+    .sidebar li:hover {
+      background: #d4d4d4;
+      font-weight: 600;
+    }
+    .content {
+      flex: 1;
+      padding: 2rem;
+    }
+    .form-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: none; /* پیش‌فرض پنهان */
+    }
+    .form-card.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .btn-primary {
+      background: #2b3a55;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-primary:hover {
+      background: #3b4a6b;
+    }
+  </style>
 </head>
 <body>
 
@@ -13,33 +85,36 @@
     <h1>🛠️ پنل مدیریت سوبار</h1>
     <div class="admin-user">
       <span>مدیر</span>
-      <a href="/logout" class="logout-btn">خروج</a>
+      <a href="/logout" class="logout-btn" style="color:white;">خروج</a>
     </div>
   </header>
 
   <main class="admin-wrapper">
     <aside class="sidebar">
       <ul>
-        <li class="active">📦 افزودن برند</li>
-        <li>🛒 افزودن محصول</li>
+        <li class="menu-item active" data-target="add-brand">📦 افزودن برند</li>
+        <li class="menu-item" data-target="add-product">🛒 افزودن محصول</li>
       </ul>
     </aside>
 
     <section class="content">
       <!-- فرم افزودن برند -->
-      <div class="form-card" id="add-brand">
+      <div class="form-card active" id="add-brand">
         <h2>➕ افزودن برند جدید</h2>
         <form action="/admin/add-brand" method="POST" enctype="multipart/form-data">
           <div class="form-group">
             <label>نام برند:</label>
             <input type="text" name="brand_name" placeholder="مثلاً: پارس اشن" required>
           </div>
-
           <div class="form-group">
             <label>لوگو برند:</label>
-            <input type="file" name="logo" accept="image/*">
+            <input type="file" name="logo" id="brand-logo" accept="image/*">
+            <% if (brands.length > 0 && brands[0].logo_path) { %>
+              <img id="brand-logo-preview" src="<%= brands[0].logo_path %>" alt="لوگو برند" style="margin-top:10px; max-width:150px; border-radius:8px;">
+            <% } else { %>
+              <img id="brand-logo-preview" src="#" alt="پیش‌نمایش لوگو برند" style="display:none; margin-top:10px; max-width:150px; border-radius:8px;">
+            <% } %>
           </div>
-
           <button type="submit" class="btn-primary">ثبت برند</button>
         </form>
       </div>
@@ -52,7 +127,6 @@
             <label>نام محصول:</label>
             <input type="text" name="p_name" placeholder="مثلاً: سیلر" required>
           </div>
-
           <div class="form-group">
             <label>انتخاب برند:</label>
             <select name="b_id" required>
@@ -62,17 +136,79 @@
               <% }) %>
             </select>
           </div>
-
           <div class="form-group">
             <label>عکس محصول:</label>
-            <input type="file" name="p_logo" accept="image/*">
+            <input type="file" name="p_logo" id="product-logo" accept="image/*">
+            <% if (products.length > 0 && products[0].product_logo) { %>
+              <img id="product-logo-preview" src="<%= products[0].product_logo %>" alt="عکس محصول" style="margin-top:10px; max-width:150px; border-radius:8px;">
+            <% } else { %>
+              <img id="product-logo-preview" src="#" alt="پیش‌نمایش عکس محصول" style="display:none; margin-top:10px; max-width:150px; border-radius:8px;">
+            <% } %>
           </div>
-
           <button type="submit" class="btn-primary">ثبت محصول</button>
         </form>
       </div>
     </section>
   </main>
+
+  <script>
+    // کنترل نمایش فرم‌ها با کلیک روی منو
+    const menuItems = document.querySelectorAll('.menu-item');
+    const forms = document.querySelectorAll('.form-card');
+
+    menuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        // حذف active از همه منوها
+        menuItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+
+        // نمایش فقط فرم مربوطه
+        const target = item.getAttribute('data-target');
+        forms.forEach(form => {
+          if (form.id === target) {
+            form.classList.add('active');
+          } else {
+            form.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    const brandLogoInput = document.getElementById('brand-logo');
+    const brandPreview = document.getElementById('brand-logo-preview');
+
+    brandLogoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          brandPreview.src = ev.target.result;
+          brandPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        brandPreview.style.display = 'none';
+      }
+    });
+
+    const productLogoInput = document.getElementById('product-logo');
+    const productPreview = document.getElementById('product-logo-preview');
+    if (productLogoInput) {
+      productLogoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = ev => {
+            productPreview.src = ev.target.result;
+            productPreview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          productPreview.style.display = 'none';
+        }
+      });
+    };
+  </script>
 
 </body>
 </html>

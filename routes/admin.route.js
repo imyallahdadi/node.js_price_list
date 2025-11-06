@@ -3,6 +3,44 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 const { brand, product } = require('../models/associations')
 const users = require('../models/admin_users.model')
+const crypto = require('crypto')
+const fs = require('fs')
+const multer = require('multer')
+const path = require('path')
+
+
+const brandUploadDir = "statics/images/b_img";
+const productUploadDir = "statics/images/p_img";
+fs.mkdirSync(brandUploadDir, { recursive: true });
+fs.mkdirSync(productUploadDir, { recursive: true });
+
+
+
+function makeHashedFilename(originalName, textToHash) {
+    const ext = path.extname(originalName) || "";
+    const hash = crypto.createHash("sha256").update(textToHash).digest("hex").slice(0, 16);
+    return `${hash}${ext}`;
+}
+
+const brandStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, brandUploadDir),
+  filename: (req, file, cb) => {
+    const brandName = (req.body && req.body.brand_name) ? req.body.brand_name : "brand";
+    const filename = makeHashedFilename(file.originalname, brandName);
+    cb(null, filename);
+  }
+});
+const uploadBrand = multer({ storage: brandStorage });
+
+const productStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, productUploadDir),
+  filename: (req, file, cb) => {
+    const productName = (req.body && req.body.p_name) ? req.body.p_name : "product";
+    const filename = makeHashedFilename(file.originalname, productName);
+    cb(null, filename);
+  }
+});
+const uploadProduct = multer({ storage: productStorage });
 
 
 
@@ -15,7 +53,8 @@ router.get('/', async (req, res) => {
             jwt.verify(token, secret)
 
             const brands = await brand.findAll()
-            res.render('admin', { brands: brands || [] })
+            const products = await product.findAll()
+            res.render('admin', { brands: brands, products: products || [] })
 
         }catch{
             res.clearCookie('token')
@@ -58,8 +97,46 @@ router.post('/', async (req, res) => {
         res.redirect('/admin?q=user not found')
     }
 
-
-
 })
+
+router.post("/add-brand", uploadBrand.single("logo"), async (req, res) => {
+  try {
+    const brand_name = req.body.brand_name;
+    const logoPath = req.file ? `/statics/images/b_img/${req.file.filename}` : null;
+
+    const [existing] = await db.query("SELECT * FROM brands WHERE brand_name = ?", [brand_name]);
+    if (existing.length > 0) {
+      await db.query("UPDATE brands SET logo_path = ? WHERE brand_name = ?", [logoPath, brand_name]);
+    } else {
+      await db.query("INSERT INTO brands (brand_name, logo_path) VALUES (?, ?)", [brand_name, logoPath]);
+    }
+
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("خطا در ثبت برند");
+  }
+});
+
+
+router.post("/add-product", uploadProduct.single("p_logo"), async (req, res) => {
+  try {
+    const p_name = req.body.p_name;
+    const b_id = req.body.b_id;
+    const logoPath = req.file ? `/statics/images/p_img/${req.file.filename}` : null;
+
+    const [existing] = await db.query("SELECT * FROM products WHERE product_name = ?", [p_name]);
+    if (existing.length > 0) {
+      await db.query("UPDATE products SET product_logo = ?, brand_id = ? WHERE product_name = ?", [logoPath, b_id, p_name]);
+    } else {
+      await db.query("INSERT INTO products (product_name, brand_id, product_logo) VALUES (?, ?, ?)", [p_name, b_id, logoPath]);
+    }
+
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("خطا در ثبت محصول");
+  }
+});
 
 module.exports = router
