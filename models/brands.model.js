@@ -26,7 +26,7 @@ const brands = sequelize.define(
 
     },
     {
-        timestamps: false
+        timestamps: true
     }
 )
 

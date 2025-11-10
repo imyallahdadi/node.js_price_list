@@ -16,6 +16,11 @@ const products = sequelize.define(
             allowNull: false,
             require: true
         },
+        p_price: {
+            type: DataTypes.BIGINT,
+            allowNull: false,
+            defaultValue: 0
+        },
         p_logo: {
             type: DataTypes.STRING,
             allowNull: true
@@ -32,7 +37,7 @@ const products = sequelize.define(
         }
     },
     {
-        timestamps: false
+        timestamps: true
     }
 )
 

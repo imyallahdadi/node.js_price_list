@@ -86,6 +86,12 @@ main {
   border: 1px solid rgba(255,255,255,0.3);
 }
 
+.brand-card-link {
+  text-decoration: none;   
+  color: inherit;          
+  display: block;         
+}
+
 .brand-card:hover {
   transform: translateY(-8px) scale(1.03);
   box-shadow: 0 25px 50px rgba(0,0,0,0.2);

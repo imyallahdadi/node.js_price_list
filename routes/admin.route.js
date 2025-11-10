@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
 
             const brands = await brand.findAll()
             const products = await product.findAll()
-            res.render('admin', { brands: brands, products: products || [] })
+            res.render('admin', { brands: brands, products: products, q: q || [] })
 
         }catch{
             res.clearCookie('token')
@@ -102,16 +102,16 @@ router.post('/', async (req, res) => {
 router.post("/add-brand", uploadBrand.single("logo"), async (req, res) => {
   try {
     const brand_name = req.body.brand_name;
-    const logoPath = req.file ? `/statics/images/b_img/${req.file.filename}` : null;
+    const logoPath = req.file ? `/images/b_img/${req.file.filename}` : null;
 
-    const [existing] = await db.query("SELECT * FROM brands WHERE brand_name = ?", [brand_name]);
-    if (existing.length > 0) {
-      await db.query("UPDATE brands SET logo_path = ? WHERE brand_name = ?", [logoPath, brand_name]);
+    const existing = await brand.findOne( { where: { brand_name: brand_name } } );
+    if (existing) {
+      await existing.update( { logo: logoPath} );
     } else {
-      await db.query("INSERT INTO brands (brand_name, logo_path) VALUES (?, ?)", [brand_name, logoPath]);
+      await brand.create( { brand_name: brand_name,  logo: logoPath } );
     }
 
-    res.redirect("/admin");
+    res.redirect("/admin?q=changing successfully!");
   } catch (err) {
     console.error(err);
     res.status(500).send("خطا در ثبت برند");
@@ -123,16 +123,21 @@ router.post("/add-product", uploadProduct.single("p_logo"), async (req, res) => 
   try {
     const p_name = req.body.p_name;
     const b_id = req.body.b_id;
-    const logoPath = req.file ? `/statics/images/p_img/${req.file.filename}` : null;
+    const logoPath = req.file ? `/images/p_img/${req.file.filename}` : null;
 
-    const [existing] = await db.query("SELECT * FROM products WHERE product_name = ?", [p_name]);
-    if (existing.length > 0) {
-      await db.query("UPDATE products SET product_logo = ?, brand_id = ? WHERE product_name = ?", [logoPath, b_id, p_name]);
+    const existing = await product.findOne( {
+      where: {
+        p_name: p_name,
+        brand_id: b_id
+      }
+    });
+    if (existing) {
+      await existing.update( { p_logo: logoPath} );
     } else {
-      await db.query("INSERT INTO products (product_name, brand_id, product_logo) VALUES (?, ?, ?)", [p_name, b_id, logoPath]);
+      await product.create( { p_name: p_name, brand_id: b_id, p_logo: logoPath} );
     }
 
-    res.redirect("/admin");
+    res.redirect("/admin?q=changing successfully!");
   } catch (err) {
     console.error(err);
     res.status(500).send("خطا در ثبت محصول");

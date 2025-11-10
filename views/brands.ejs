@@ -1,4 +1,5 @@
-<div class="page-container">
+<!-- <div class="page-container"> -->
+
 <%- include('header') %>
     <main>
       <% if(typeof q !== 'undefined' && q){ %>
@@ -9,15 +10,18 @@
 
       <div class="brand-grid">
         <% brands.forEach(brand => { %>
-          <div class="brand-card">
-            <img src="../statics/images/b_img/<%=brand.logo %>.jpg" alt="<%= brand.brand_name %>">
-            <h2><%= brand.brand_name%></h2>
-          </div>
+          <a href="/products/<%=brand.brand_id%>" class="brand-card-link">
+            <div class="brand-card">
+              <img src="<%=brand.logo %>" alt="<%= brand.brand_name %>">
+              <h2><%= brand.brand_name%></h2>
+            </div>
+          </a>
         <% }) %>
       </div>
     </main>
 
 <%- include('footer') %>
+
 </body>
 </html>
  

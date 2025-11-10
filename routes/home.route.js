@@ -19,5 +19,18 @@ router.get('/products/:brand_id', async (req, res)=> {
 
 })
 
+router.get("/api/products/:brand_id", async (req, res) => {
+    try{
+        const { brand_id } = req.params;
+        const selectedbrand = await brand.findByPk(brand_id, { include: { model: product, as: 'products' } }) 
+        if(!selectedbrand){
+            return res.status(404).json({error: 'برند پیدا نشد'});
+        }
+        res.json(selectedbrand.products);
+    }catch (err){
+        console.log(err);
+        res.status(500).json({error: 'خطا در دریافت محصولات '});
+    }
+})
 
 module.exports = router

@@ -96,6 +96,11 @@
         <li class="menu-item" data-target="add-product">🛒 افزودن محصول</li>
       </ul>
     </aside>
+    
+      <% if (typeof q != 'undefined') { %>
+        <div class="error-msg"><%= q %></div>
+      <% } %>
+
 
     <section class="content">
       <!-- فرم افزودن برند -->
@@ -117,6 +122,24 @@
           </div>
           <button type="submit" class="btn-primary">ثبت برند</button>
         </form>
+
+        <hr style="margin: 2rem 0;">
+
+        <h3>📋 لیست برندهای ثبت‌شده</h3>
+        <div class="brand-list" style="display:flex; flex-wrap:wrap; gap:20px; margin-top:10px;">
+          <% if (brands && brands.length > 0) { %>
+            <% brands.forEach(brand => { %>
+              <div class="brand-card" style="background:white; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:160px; text-align:center;">
+                <img src="<%= brand.logo ? brand.logo : '/images/no-image.png' %>" alt="<%= brand.brand_name %>" style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
+                <p style="margin-top:8px;"><%= brand.brand_name %></p>
+                <p style="margin-top:8px;"><%= brand.updatedAt %></p>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p>هیچ برندی ثبت نشده است.</p>
+          <% } %>
+        </div>
+
       </div>
 
       <!-- فرم افزودن محصول -->
@@ -130,7 +153,7 @@
           <div class="form-group">
             <label>انتخاب برند:</label>
             <select name="b_id" required>
-              <option value="">-- انتخاب برند --</option>
+              <option value="" selected>-- انتخاب برند --</option>
               <% brands.forEach(function(b) { %>
                 <option value="<%= b.brand_id %>"><%= b.brand_name %></option>
               <% }) %>
@@ -147,6 +170,12 @@
           </div>
           <button type="submit" class="btn-primary">ثبت محصول</button>
         </form>
+        <hr style="margin: 2rem 0;">
+
+        <h3>🛍️ محصولات این برند</h3>
+        <div id="product-list" style="display:flex; flex-wrap:wrap; gap:20px; margin-top:10px;">
+          <p>لطفاً برند را انتخاب کنید تا محصولاتش نمایش داده شود.</p>
+        </div>
       </div>
     </section>
   </main>
@@ -208,6 +237,42 @@
         }
       });
     };
+
+    const brandSelect = document.querySelector('select[name="b_id"]');
+    const productList = document.getElementById('product-list');
+
+    brandSelect.addEventListener('change', async (e) => {
+      const brandId = e.target.value;
+      if (!brandId) {
+        productList.innerHTML = "<p>لطفاً برند را انتخاب کنید.</p>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/products/${brandId}`);
+        const products = await res.json();
+        console.log(products);
+
+        if (products.length === 0) {
+          productList.innerHTML = "<p>هیچ محصولی برای این برند ثبت نشده است.</p>";
+          return;
+        }
+        
+
+        productList.innerHTML = products.map(p => `
+          <a href="/edit_product/${p.p_id}" class="product-card" style="display:block; background:white; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:160px; text-align:center; text-decoration:none; color:inherit; transition:transform 0.2s, box-shadow 0.2s;">
+            <img src="${p.p_logo || '/images/no-image.png'}" alt="${p.p_name}" style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
+            <p style="margin-top:8px;">${p.p_name}</p>
+            <p style="margin-top:8px;">${p.p_price}</p>
+            <p style="margin-top:8px;">${p.updatedAt}</p>
+          </a>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        productList.innerHTML = "<p>خطا در بارگذاری محصولات.</p>";
+      }
+    });
+
   </script>
 
 </body>
