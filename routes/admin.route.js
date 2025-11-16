@@ -123,6 +123,7 @@ router.post("/add-product", uploadProduct.single("p_logo"), async (req, res) => 
   try {
     const p_name = req.body.p_name;
     const b_id = req.body.b_id;
+    const price  = req.body.price;
     const logoPath = req.file ? `/images/p_img/${req.file.filename}` : null;
 
     const existing = await product.findOne( {
@@ -134,7 +135,7 @@ router.post("/add-product", uploadProduct.single("p_logo"), async (req, res) => 
     if (existing) {
       await existing.update( { p_logo: logoPath} );
     } else {
-      await product.create( { p_name: p_name, brand_id: b_id, p_logo: logoPath} );
+      await product.create( { p_name: p_name, brand_id: b_id, p_price: price, p_logo: logoPath} );
     }
 
     res.redirect("/admin?q=changing successfully!");
@@ -143,5 +144,42 @@ router.post("/add-product", uploadProduct.single("p_logo"), async (req, res) => 
     res.status(500).send("خطا در ثبت محصول");
   }
 });
+
+router.post("/edit-brand", uploadBrand.single("logo"), async (req, res) => {
+  try {
+    const { brand_id, brand_name } = req.body;
+
+    // 1. گرفتن برند موجود
+    const b = await brand.findOne({ where: { brand_id }});
+    if (!b) return res.redirect("/admin?q=brand not found");
+
+    let newLogoPath = b.logo; // پیش‌فرض: همون قبلی بماند
+
+    // 2. اگر لوگوی جدید آپلود شده باشد → تولید هش جدید + حذف فایل قبلی
+    if (req.file) {
+      newLogoPath = `/images/b_img/${req.file.filename}`;
+
+      // حذف فایل قدیمی اگر وجود داشته باشد:
+      if (b.logo) {
+        const oldPath = path.join("statics", b.logo.replace("/images", ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+    }
+
+    // 3. به‌روزرسانی برند
+    await b.update({
+      brand_name: brand_name,
+      logo: newLogoPath
+    });
+
+    return res.redirect("/admin?q=brand updated successfully!");
+
+  } catch (err) {
+    console.error(err);
+    res.redirect("/admin?q=error updating brand");
+  }
+});
+
+
 
 module.exports = router

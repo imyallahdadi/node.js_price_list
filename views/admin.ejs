@@ -77,6 +77,32 @@
     .btn-primary:hover {
       background: #3b4a6b;
     }
+    .brand-card:hover {
+      transform:scale(1.06);
+      box-shadow:0 4px 12px rgba(0,0,0,0.18);
+    }
+    .modal-box {
+      animation: pop 0.25s ease;
+    }
+    @keyframes pop {
+      from { transform:scale(0.8); opacity:0; }
+      to { transform:scale(1); opacity:1; }
+    }
+    .product-card {
+      background:white;
+      padding:10px;
+      border-radius:12px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.1);
+      width:160px;
+      cursor:pointer;
+      transition:0.3s;
+      text-align:center;
+    }
+    .product-card:hover {
+      transform: scale(1.06);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+
   </style>
 </head>
 <body>
@@ -129,15 +155,36 @@
         <div class="brand-list" style="display:flex; flex-wrap:wrap; gap:20px; margin-top:10px;">
           <% if (brands && brands.length > 0) { %>
             <% brands.forEach(brand => { %>
-              <div class="brand-card" style="background:white; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:160px; text-align:center;">
-                <img src="<%= brand.logo ? brand.logo : '/images/no-image.png' %>" alt="<%= brand.brand_name %>" style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
-                <p style="margin-top:8px;"><%= brand.brand_name %></p>
-                <p style="margin-top:8px;"><%= brand.updatedAt %></p>
+              <div class="brand-card" data-id="<%= brand.brand_id %>" style="background:white; padding:10px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:160px; text-align:center; cursor:pointer; transition:0.3s;">
+                <img src="<%= brand.logo ? brand.logo : '/images/no-image.png' %>" alt="<%= brand.brand_name %>" style="width:100px; height:100px; object-fit:cover; border-radius:8px; transition:0.3s;">
+                <p style="margin-top:8px; font-weight:600;"><%= brand.brand_name %></p>
+                <p style="margin-top:8px; font-weight:600;"><%= brand.updatedAt %></p>
               </div>
             <% }) %>
           <% } else { %>
             <p>هیچ برندی ثبت نشده است.</p>
           <% } %>
+        </div>
+        
+        <div id="brand-edit-modal" class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:1000;">
+          <div class="modal-box" style="background:white; padding:20px; border-radius:15px; width:350px; box-shadow:0 4px 15px rgba(0,0,0,0.2); animation:pop 0.25s ease;">
+            <h3 style="margin-top:0; text-align:center;">ویرایش برند</h3>
+            <form id="edit-brand-form" action="/admin/edit-brand" method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="brand_id" id="edit-brand-id">
+
+              <label>نام برند:</label>
+              <input type="text" name="brand_name" id="edit-brand-name" style="width:100%; margin-bottom:10px; padding:8px; border-radius:8px; border:1px solid #ccc;">
+
+              <label>لوگو جدید:</label>
+              <input type="file" name="logo" id="edit-brand-logo" accept="image/*" style="margin-bottom:10px;">
+
+              <img id="edit-brand-preview" src="#" style="width:120px; height:120px; object-fit:cover; border-radius:10px; display:none; margin:auto;">
+
+              <button type="submit" style="margin-top:15px; width:100%; background:#2b3a55; color:white; padding:10px; border:none; border-radius:10px; cursor:pointer;">ذخیره تغییرات</button>
+            </form>
+
+            <button id="close-modal" style="margin-top:10px; width:100%; background:#888; color:white; padding:10px; border:none; border-radius:10px; cursor:pointer;">بستن</button>
+          </div>
         </div>
 
       </div>
@@ -168,30 +215,80 @@
               <img id="product-logo-preview" src="#" alt="پیش‌نمایش عکس محصول" style="display:none; margin-top:10px; max-width:150px; border-radius:8px;">
             <% } %>
           </div>
+          <div class="form-group">
+            <label>قیمت :</label>
+            <input type="text" name="price" placeholder="0" required>
+          </div>
           <button type="submit" class="btn-primary">ثبت محصول</button>
         </form>
         <hr style="margin: 2rem 0;">
 
-        <h3>🛍️ محصولات این برند</h3>
+        <h3>🛍️ محصولات</h3>
         <div id="product-list" style="display:flex; flex-wrap:wrap; gap:20px; margin-top:10px;">
           <p>لطفاً برند را انتخاب کنید تا محصولاتش نمایش داده شود.</p>
         </div>
+
+
+
+            <!-- پاپ‌آپ ادیت محصول -->
+        <div id="product-edit-modal" class="modal-overlay" 
+          style="position:fixed; top:0; left:0; width:100%; height:100%;
+          background:rgba(0,0,0,0.5); display:none; justify-content:center;
+          align-items:center; z-index:1000;">
+
+          <div class="modal-box" 
+            style="background:white; padding:20px; border-radius:15px;
+            width:350px; box-shadow:0 4px 15px rgba(0,0,0,0.2);
+            animation:pop 0.25s ease;">
+
+            <h3 style="text-align:center; margin-top:0;">ویرایش محصول</h3>
+
+            <form id="edit-product-form" action="/admin/edit-product" method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="p_id" id="edit-product-id">
+
+              <label>نام محصول:</label>
+              <input type="text" name="p_name" id="edit-product-name"
+                style="width:100%; margin-bottom:10px; padding:8px; border-radius:8px; border:1px solid #ccc;">
+
+              <label>قیمت:</label>
+              <input type="text" name="p_price" id="edit-product-price"
+                style="width:100%; margin-bottom:10px; padding:8px; border-radius:8px; border:1px solid #ccc;">
+
+              <label>عکس جدید:</label>
+              <input type="file" name="p_logo" id="edit-product-logo" accept="image/*">
+
+              <img id="edit-product-preview" src="#"
+                style="width:120px; height:120px; object-fit:cover; border-radius:10px;
+                display:none; margin:auto; margin-top:12px;">
+
+              <button type="submit"
+                style="margin-top:15px; width:100%; background:#2b3a55; color:white;
+                padding:10px; border:none; border-radius:10px; cursor:pointer;">
+                ذخیره تغییرات
+              </button>
+            </form>
+
+            <button id="close-product-modal"
+              style="margin-top:10px; width:100%; background:#888; color:white;
+              padding:10px; border:none; border-radius:10px; cursor:pointer;">
+              بستن
+            </button>
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
 
   <script>
-    // کنترل نمایش فرم‌ها با کلیک روی منو
     const menuItems = document.querySelectorAll('.menu-item');
     const forms = document.querySelectorAll('.form-card');
 
     menuItems.forEach(item => {
       item.addEventListener('click', () => {
-        // حذف active از همه منوها
         menuItems.forEach(i => i.classList.remove('active'));
         item.classList.add('active');
 
-        // نمایش فقط فرم مربوطه
         const target = item.getAttribute('data-target');
         forms.forEach(form => {
           if (form.id === target) {
@@ -259,18 +356,122 @@
         }
         
 
-        productList.innerHTML = products.map(p => `
-          <a href="/edit_product/${p.p_id}" class="product-card" style="display:block; background:white; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:160px; text-align:center; text-decoration:none; color:inherit; transition:transform 0.2s, box-shadow 0.2s;">
-            <img src="${p.p_logo || '/images/no-image.png'}" alt="${p.p_name}" style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
-            <p style="margin-top:8px;">${p.p_name}</p>
-            <p style="margin-top:8px;">${p.p_price}</p>
-            <p style="margin-top:8px;">${p.updatedAt}</p>
-          </a>
-        `).join('');
+      productList.innerHTML = products.map(p => `
+        <div class="product-card" data-id="${p.p_id}" 
+          style="background:white; padding:10px; border-radius:12px; 
+          box-shadow:0 2px 5px rgba(0,0,0,0.1); width:160px; cursor:pointer; 
+          transition:0.3s; text-align:center;">
+
+          <img src="${p.p_logo || '/images/no-image.png'}"
+            alt="${p.p_name}" 
+            style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
+
+          <p class="p-name" style="margin-top:8px; font-weight:600;">${p.p_name}</p>
+          <p class="p-price" style="margin-top:5px;">${p.p_price}</p>
+          <p style="margin-top:5px;">${p.updatedAt}</p>
+
+        </div>
+      `).join('');
       } catch (err) {
         console.error(err);
         productList.innerHTML = "<p>خطا در بارگذاری محصولات.</p>";
       }
+    });
+
+    // باز کردن پاپ‌آپ با کلیک روی هر برند
+    const brandCards = document.querySelectorAll('.brand-card');
+    const modal = document.getElementById('brand-edit-modal');
+    const closeModal = document.getElementById('close-modal');
+
+    brandCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.getAttribute('data-id');
+        const name = card.querySelector('p').innerText;
+        const img = card.querySelector('img').src;
+
+        document.getElementById('edit-brand-id').value = id;
+        document.getElementById('edit-brand-name').value = name;
+        document.getElementById('edit-brand-preview').src = img;
+        document.getElementById('edit-brand-preview').style.display = 'block';
+
+        modal.style.display = 'flex';
+      });
+    });
+
+    // بستن پاپ‌آپ
+    closeModal.addEventListener('click', () => modal.style.display = 'none');
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+
+    // پیش‌نمایش لوگوی جدید داخل پاپ‌آپ
+    const logoInput = document.getElementById('edit-brand-logo');
+    const preview = document.getElementById('edit-brand-preview');
+
+    logoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          preview.src = ev.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // --- باز کردن پاپ‌آپ ادیت محصول ---
+    document.addEventListener("click", function(e) {
+      if (e.target.closest(".product-card")) {
+        const card = e.target.closest(".product-card");
+
+
+        const id = card.getAttribute("data-id");
+        const name = card.querySelector(".p-name").innerText;
+        const price = card.querySelector(".p-price").innerText;
+        const img = card.querySelector("img").src;
+
+
+        document.getElementById("edit-product-id").value = id;
+        document.getElementById("edit-product-name").value = name;
+        document.getElementById("edit-product-price").value = price;
+
+
+        const preview = document.getElementById("edit-product-preview");
+        preview.src = img;
+        preview.style.display = "block";
+
+
+        document.getElementById("product-edit-modal").style.display = "flex";
+      }
+    });
+
+
+    // --- بستن پاپ‌آپ ---
+    document.getElementById("close-product-modal").addEventListener("click", () => {
+    document.getElementById("product-edit-modal").style.display = "none";
+    });
+
+
+    document.getElementById("product-edit-modal").addEventListener("click", (e) => {
+    if (e.target.id === "product-edit-modal") {
+    e.target.style.display = "none";
+    }
+    });
+
+
+    // --- پیش‌نمایش عکس جدید ---
+    document.getElementById("edit-product-logo").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+    document.getElementById("edit-product-preview").src = ev.target.result;
+    document.getElementById("edit-product-preview").style.display = "block";
+    };
+    reader.readAsDataURL(file);
+    }
     });
 
   </script>
